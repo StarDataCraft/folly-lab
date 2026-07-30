@@ -1,5 +1,7 @@
 """Folly: tiny, offline-friendly digital playgrounds."""
 
+from __future__ import annotations
+
 import streamlit as st
 
 
@@ -7,13 +9,18 @@ TODAY_NAME = "The Constellation That Waited for You"
 RAIN_NAME = "The Button That Remembers Rain"
 SECTIONS = ("Today", "Archive", "Random", "About")
 EXPERIMENTS = (TODAY_NAME, RAIN_NAME)
+STAR_KINDS = {
+    "Glow": {"symbol": "✦", "color": "#fff0ad", "voice": "warm"},
+    "Drift": {"symbol": "·", "color": "#c9d9ff", "voice": "quiet"},
+    "Dare": {"symbol": "✧", "color": "#ffc4df", "voice": "wild"},
+}
 STAR_POSITIONS = (
-    (17, 26, "✦"),
-    (76, 20, "·"),
-    (48, 48, "✧"),
-    (25, 72, "·"),
-    (82, 69, "✦"),
-    (59, 82, "·"),
+    (17, 26),
+    (76, 20),
+    (48, 48),
+    (25, 72),
+    (82, 69),
+    (59, 82),
 )
 STAR_LINES = (
     (17, 26, 76, 20),
@@ -24,28 +31,55 @@ STAR_LINES = (
 )
 
 
-def constellation_markup(star_count: int) -> str:
+def constellation_result(star_path: tuple[str, ...]) -> tuple[str, str]:
+    """Name a finished sky from the player's chosen sequence."""
+    counts = {kind: star_path.count(kind) for kind in STAR_KINDS}
+    if len(set(star_path)) == 1:
+        return {
+            "Glow": ("The Steadfast Lantern", "It kept one promise six times."),
+            "Drift": ("The Patient Tide", "It crossed the sky without hurrying."),
+            "Dare": ("The Beautiful Trouble", "It refused every straight answer."),
+        }[star_path[0]]
+    if star_path[0] == star_path[-1]:
+        return "The Returning Comet", "It wandered far enough to choose its beginning."
+    if all(count == 2 for count in counts.values()):
+        return "The Impossible Balance", "Three instincts agreed to share one sky."
+    dominant = max(STAR_KINDS, key=counts.get)
+    return {
+        "Glow": ("The Kind Conspiracy", "Its brightest stars quietly recruited the rest."),
+        "Drift": ("The Sideways River", "It found a route the map had overlooked."),
+        "Dare": ("The Unbuttoned Crown", "It became royal by ignoring the instructions."),
+    }[dominant]
+
+
+def constellation_markup(star_path: tuple[str, ...]) -> str:
     """Return the deterministic pocket sky for the current interaction state."""
     stars = "".join(
         (
-            f'<span class="star" style="left:{x}%;top:{y}%">'
-            f"{symbol}</span>"
+            f'<span class="star" data-kind="{kind}" '
+            f'style="left:{x}%;top:{y}%;color:{STAR_KINDS[kind]["color"]}">'
+            f'{STAR_KINDS[kind]["symbol"]}</span>'
         )
-        for x, y, symbol in STAR_POSITIONS[:star_count]
+        for (x, y), kind in zip(STAR_POSITIONS, star_path)
     )
     lines = "".join(
         (
-            f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" />'
+            f'<line class="{star_path[index + 1].lower()}" '
+            f'x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" />'
         )
-        for x1, y1, x2, y2 in STAR_LINES[: max(0, star_count - 1)]
+        for index, (x1, y1, x2, y2) in enumerate(
+            STAR_LINES[: max(0, len(star_path) - 1)]
+        )
     )
-    message = (
-        "The sky is listening."
-        if star_count == 0
-        else "A small pattern is beginning."
-        if star_count < len(STAR_POSITIONS)
-        else "It was waiting to become this."
-    )
+    if not star_path:
+        message = "The sky is listening."
+    elif len(star_path) < 3:
+        message = f"A {STAR_KINDS[star_path[-1]]['voice']} star has answered."
+    elif len(star_path) < len(STAR_POSITIONS):
+        leading = max(STAR_KINDS, key=star_path.count)
+        message = f"It is leaning {STAR_KINDS[leading]['voice']}… for now."
+    else:
+        message = "The pattern has chosen its name."
     return (
         '<div class="sky" data-testid="constellation-sky">'
         '<div class="orbit"></div>'
@@ -95,8 +129,15 @@ st.markdown(
         font-size:1.65rem; text-shadow:0 0 15px #ffd999; animation:arrive .65s ease both; z-index:2; }
     .threads { position:absolute; inset:0; width:100%; height:100%; }
     .threads line { stroke:#edcfaa; stroke-width:.32; opacity:.62; }
+    .threads line.glow { stroke:#fff0ad; }
+    .threads line.drift { stroke:#aabfe8; stroke-dasharray:1.5 1; }
+    .threads line.dare { stroke:#ffafd2; stroke-width:.5; }
     .sky-note { position:absolute; left:1.4rem; bottom:1.2rem; color:#d8d3e7;
         font-size:.78rem; letter-spacing:.08em; }
+    .result-card { margin:.9rem 0; padding:1.1rem 1.3rem; border-radius:1.2rem;
+        color:#fdf8ed; background:linear-gradient(120deg,#4f3f72,#854f73);
+        box-shadow:0 12px 35px #4f3f7230; animation:arrive .65s ease both; }
+    .result-card b { display:block; font-size:1.15rem; margin-bottom:.2rem; }
     .archive-card { padding:1.2rem 1.35rem; border:1px solid #ddd2c5; border-radius:1.3rem;
         background:rgba(255,255,255,.52); margin:.75rem 0; }
     .release { margin-top:3rem; padding-top:1rem; border-top:1px solid #ddd2c5; color:#7c7381; font-size:.75rem; }
@@ -113,8 +154,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-if "star_count" not in st.session_state:
-    st.session_state.star_count = 0
+if "star_path" not in st.session_state:
+    st.session_state.star_path = []
 if "random_index" not in st.session_state:
     st.session_state.random_index = 0
 
@@ -132,11 +173,19 @@ if section == "Today":
     st.caption("TODAY · FOLLY № 2")
     st.header(TODAY_NAME)
     st.markdown(
-        '<p class="intro">Place six quiet stars. They will decide how they know one another.</p>',
+        '<p class="intro">Choose how each star arrives. Your six choices will name the sky.</p>',
         unsafe_allow_html=True,
     )
-    st.markdown(constellation_markup(st.session_state.star_count), unsafe_allow_html=True)
-    placed = st.session_state.star_count
+    star_path = tuple(st.session_state.star_path)
+    st.markdown(constellation_markup(star_path), unsafe_allow_html=True)
+    placed = len(star_path)
+    st.radio(
+        "How should the next star arrive?",
+        STAR_KINDS,
+        horizontal=True,
+        key="star_kind",
+        disabled=placed >= len(STAR_POSITIONS),
+    )
     left, right = st.columns(2)
     if left.button(
         "Place a star" if placed < len(STAR_POSITIONS) else "All stars placed",
@@ -145,12 +194,23 @@ if section == "Today":
         disabled=placed >= len(STAR_POSITIONS),
         use_container_width=True,
     ):
-        st.session_state.star_count += 1
+        st.session_state.star_path.append(st.session_state.star_kind)
         st.rerun()
-    if right.button("Clear the sky", key="reset_stars", use_container_width=True):
-        st.session_state.star_count = 0
+    if right.button(
+        "Try another sky" if placed == len(STAR_POSITIONS) else "Clear the sky",
+        key="reset_stars",
+        use_container_width=True,
+    ):
+        st.session_state.star_path = []
         st.rerun()
     st.caption(f"Stars placed: {placed} / {len(STAR_POSITIONS)}")
+    if placed == len(STAR_POSITIONS):
+        result_name, result_note = constellation_result(star_path)
+        st.markdown(
+            f'<div class="result-card" data-testid="constellation-result">'
+            f"<b>{result_name}</b>{result_note}</div>",
+            unsafe_allow_html=True,
+        )
 
 elif section == "Archive":
     st.header("Archive")

@@ -5,8 +5,51 @@
       "id": 2,
       "name": "The Constellation That Waited for You",
       "status": "today",
-      "interaction": "Place six stars to reveal a small connected constellation.",
+      "date": "2026-07-30",
+      "selected_prompt": "Choose how six stars arrive and discover the constellation named by the sequence.",
+      "rejected_candidates": [
+        "Teach the constellation a two-beat rhythm"
+      ],
+      "fun_hypothesis": "Choosing each star's character makes the evolving sky feel authored and its final name worth replaying for.",
+      "initial_product_scores": {
+        "clarity": 4.5,
+        "responsiveness": 4.0,
+        "agency": 1.5,
+        "surprise": 2.5,
+        "progression": 3.5,
+        "emotional_payoff": 2.5,
+        "replayability": 1.0,
+        "visual_coherence": 4.5,
+        "mobile_usability": 4.5,
+        "desire_to_continue": 3.5
+      },
+      "iterations": [
+        "Added Glow, Drift, and Dare choices that alter every star, connecting line, midpoint omen, and final named result."
+      ],
+      "final_product_scores": {
+        "clarity": 4.5,
+        "responsiveness": 4.5,
+        "agency": 4.0,
+        "surprise": 4.0,
+        "progression": 4.5,
+        "emotional_payoff": 4.0,
+        "replayability": 4.0,
+        "visual_coherence": 4.5,
+        "mobile_usability": 4.5,
+        "memorability": 4.0
+      },
+      "interaction": "Choose Glow, Drift, or Dare for each of six stars.",
+      "progression": "Each choice adds a styled star and line while the sky reveals its emerging temperament.",
+      "surprise": "The six-choice sequence resolves into one of several named constellations.",
+      "replay": "Try another sky with a different sequence to discover another identity.",
       "dependencies_added": [],
+      "test_result": "8 AppTest tests passed; Python compilation passed.",
+      "technical_repairs": 1,
+      "previous_commit": "a676932a2177de10cb1c9f0740160cd81dd29384",
+      "new_commit": "release HEAD (exact SHA recorded in Git history)",
+      "release_status": "ready for GitHub release",
+      "product_lesson": "A calm accumulation becomes replayable when each step contains a legible choice.",
+      "technical_lesson": "A short session-state sequence can drive distinct visuals and deterministic testable outcomes.",
       "report": "reports/nightly-2026-07-30.md"
     },
     {

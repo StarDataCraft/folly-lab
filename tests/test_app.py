@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 
 from streamlit.testing.v1 import AppTest
@@ -25,6 +27,7 @@ def test_app_launches_with_navigation_and_new_folly() -> None:
     assert any(title.value == "Folly" for title in app.title)
     assert app.radio(key="section_nav").options == list(SECTIONS)
     assert any(header.value == NEW_FOLLY for header in app.header)
+    assert app.radio(key="star_kind").options == ["Glow", "Drift", "Dare"]
     assert app.button(key="place_star").label == "Place a star"
 
 
@@ -36,7 +39,8 @@ def test_placing_a_star_changes_visible_state() -> None:
 
     assert not app.exception
     assert app.caption[-1].value == "Stars placed: 1 / 6"
-    assert "A small pattern is beginning." in app.markdown[-2].value
+    sky = next(item.value for item in app.markdown if "constellation-sky" in item.value)
+    assert 'data-kind="Glow"' in sky
 
 
 def test_clear_sky_replays_from_initial_state() -> None:
@@ -49,7 +53,36 @@ def test_clear_sky_replays_from_initial_state() -> None:
 
     assert not app.exception
     assert app.caption[-1].value == "Stars placed: 0 / 6"
-    assert "The sky is listening." in app.markdown[-2].value
+    assert "The sky is listening." in " ".join(item.value for item in app.markdown)
+
+
+def complete_path(app: AppTest, choices: list[str]) -> AppTest:
+    for choice in choices:
+        app.radio(key="star_kind").set_value(choice).run()
+        app.button(key="place_star").click().run()
+    return app
+
+
+def result_copy(app: AppTest) -> str:
+    return next(item.value for item in app.markdown if "constellation-result" in item.value)
+
+
+def test_repeated_choices_reach_a_named_culmination() -> None:
+    app = complete_path(launch_app(), ["Glow"] * 6)
+
+    assert not app.exception
+    assert app.caption[-1].value == "Stars placed: 6 / 6"
+    assert "The Steadfast Lantern" in result_copy(app)
+    assert app.button(key="reset_stars").label == "Try another sky"
+
+
+def test_different_paths_produce_different_valid_results() -> None:
+    glow_app = complete_path(launch_app(), ["Glow"] * 6)
+    drift_app = complete_path(launch_app(), ["Drift"] * 6)
+
+    assert "The Steadfast Lantern" in result_copy(glow_app)
+    assert "The Patient Tide" in result_copy(drift_app)
+    assert result_copy(glow_app) != result_copy(drift_app)
 
 
 def test_archive_preserves_original_demonstration() -> None:
