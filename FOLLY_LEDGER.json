@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "follies": [
+    {
+      "id": 1,
+      "name": "The Button That Remembers Rain",
+      "status": "demonstration",
+      "interaction": "Click a button to add remembered rain to a text cloud.",
+      "dependencies_added": [
+        "streamlit",
+        "pytest"
+      ],
+      "report": null
+    }
+  ]
+}
