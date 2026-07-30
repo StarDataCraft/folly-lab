@@ -2,6 +2,14 @@
   "version": 1,
   "follies": [
     {
+      "id": 2,
+      "name": "The Constellation That Waited for You",
+      "status": "today",
+      "interaction": "Place six stars to reveal a small connected constellation.",
+      "dependencies_added": [],
+      "report": "reports/nightly-2026-07-30.md"
+    },
+    {
       "id": 1,
       "name": "The Button That Remembers Rain",
       "status": "demonstration",
